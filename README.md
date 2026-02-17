@@ -6,4 +6,5 @@ A simple attendance management system implemented in C++
 -C++ Compiler
 
 ##Author
+
 Bekoe Sakyi Ernest- 01240087D 
