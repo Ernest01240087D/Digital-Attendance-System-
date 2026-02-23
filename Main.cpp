@@ -1,254 +1,320 @@
 #include <iostream>
-#include <fstream>
-#include <vector>
 #include <string>
-#include <iomanip>
-#include <filesystem>
+#include <vector>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
-namespace fs = std::filesystem;
 
-// ================= STUDENT CLASS =================
+/* =========================
+   STUDENT CLASS
+========================= */
+
 class Student {
-private:
+public:
     string name;
     string indexNumber;
 
-public:
-    Student(string n = "", string i = "") {
+    Student(string n, string i) {
         name = n;
         indexNumber = i;
     }
 
-    string getName() const { return name; }
-    string getIndexNumber() const { return indexNumber; }
-
-    void display() const {
-        cout << left << setw(25) << name
-             << setw(15) << indexNumber << endl;
-    }
-
-    string toFileString() const {
-        return name + "," + indexNumber;
+    void display() {
+        cout << "Name: " << name
+             << ", Index Number: " << indexNumber << endl;
     }
 };
 
-// ================= GLOBAL DATA =================
 vector<Student> students;
 
-// ================= FILE FUNCTIONS =================
-void loadStudents() {
-    ifstream file("students.txt");
-    if (!file) return;
+                    //Attendance Session Class//
+class AttendanceSession {
+public:
+    string courseCode;
+    string date;
+    string startTime;
+    int duration;
 
-    string line;
-    while (getline(file, line)) {
-        size_t pos = line.find(",");
-        if (pos != string::npos) {
-            string name = line.substr(0, pos);
-            string index = line.substr(pos + 1);
-            students.push_back(Student(name, index));
-        }
+    AttendanceSession(string c, string d, string s, int dur) {
+        courseCode = c;
+        date = d;
+        startTime = s;
+        duration = dur;
     }
-    file.close();
-}
 
-void saveStudents() {
-    ofstream file("students.txt");
-    for (const Student &s : students) {
-        file << s.toFileString() << endl;
+    void displaySession() {
+        cout << "Course: " << courseCode
+             << ", Date: " << date
+             << ", Start Time: " << startTime
+             << ", Duration: " << duration << " hour(s)" << endl;
     }
-    file.close();
-}
+};
 
-// ================= STUDENT MANAGEMENT =================
+vector<AttendanceSession> sessions;
+
+/* =========================
+   ATTENDANCE RECORD
+========================= */
+class AttendanceRecord {
+public:
+    string studentIndex;
+    string courseCode;
+    string status; // Present, Absent, Late
+
+    AttendanceRecord(string s, string c, string st) {
+        studentIndex = s;
+        courseCode = c;
+        status = st;
+    }
+};
+
+vector<AttendanceRecord> attendanceRecords;
+
+
+/* =========================
+   FUNCTIONS
+========================= */
+                    //Student registration function//
 void registerStudent() {
     string name, index;
 
-    cout << "\nEnter Student Name: ";
     cin.ignore();
+    cout << "Enter Student Name: ";
     getline(cin, name);
 
     cout << "Enter Index Number: ";
     getline(cin, index);
 
     students.push_back(Student(name, index));
-    saveStudents();
 
-    cout << "Student Registered Successfully!\n";
+    // Save to file immediately
+    ofstream file("students.txt", ios::app);
+    file << name << "," << index << endl;
+    file.close();
+
+    cout << "\nStudent saved to students.txt:\n";
+    cout << name << "," << index << endl;
 }
 
 void viewStudents() {
     if (students.empty()) {
-        cout << "\nNo students registered.\n";
+        cout << "No students registered.\n";
         return;
     }
 
-    cout << "\nRegistered Students:\n";
-    cout << left << setw(25) << "Name"
-         << setw(15) << "Index Number" << endl;
-    cout << "-------------------------------------------\n";
-
-    for (const Student &s : students) {
+    for (auto &s : students)
         s.display();
-    }
 }
 
 void searchStudent() {
     string index;
-    cout << "\nEnter Index Number to Search: ";
+    cout << "Enter index number to search: ";
     cin >> index;
 
-    for (const Student &s : students) {
-        if (s.getIndexNumber() == index) {
-            cout << "\nStudent Found:\n";
+    for (auto &s : students) {
+        if (s.indexNumber == index) {
             s.display();
             return;
         }
     }
-
-    cout << "Student Not Found.\n";
+    cout << "Student not found.\n";
 }
-
-// ================= CREATE ATTENDANCE SESSION =================
+                      //Attendance session creation function//
 void createSession() {
-    if (students.empty()) {
-        cout << "\nNo students registered.\n";
-        return;
-    }
-
-    string courseCode, date, startTime;
+    string course, date, time;
     int duration;
 
-    cout << "\nEnter Course Code: ";
-    cin >> courseCode;
+    cout << "Enter Course Code: ";
+    cin >> course;
 
-    cout << "Enter Date (YYYY_MM_DD): ";
+    cout << "Enter Date (YYYY-MM-DD): ";
     cin >> date;
 
     cout << "Enter Start Time: ";
-    cin >> startTime;
+    cin >> time;
 
-    cout << "Enter Duration (minutes): ";
+    cout << "Enter Duration (hours): ";
     cin >> duration;
 
-    string filename = "session_" + courseCode + "_" + date + ".txt";
-    ofstream file(filename);
-
-    file << "Course: " << courseCode << endl;
-    file << "Date: " << date << endl;
-    file << "Start Time: " << startTime << endl;
-    file << "Duration: " << duration << " mins\n\n";
-
-    int present = 0, absent = 0, late = 0;
-
-    for (const Student &s : students) {
-        int choice;
-        cout << "\nMark attendance for "
-             << s.getName() << " ("
-             << s.getIndexNumber() << ")\n";
-        cout << "1. Present\n2. Absent\n3. Late\nChoice: ";
-        cin >> choice;
-
-        string status;
-
-        if (choice == 1) {
-            status = "Present";
-            present++;
-        }
-        else if (choice == 2) {
-            status = "Absent";
-            absent++;
-        }
-        else {
-            status = "Late";
-            late++;
-        }
-
-        file << s.getName() << ","
-             << s.getIndexNumber() << ","
-             << status << endl;
-    }
-
-    file << "\nSummary:\n";
-    file << "Present: " << present << endl;
-    file << "Absent: " << absent << endl;
-    file << "Late: " << late << endl;
-
+    sessions.push_back(AttendanceSession(course, date, time, duration));
+    // Save to file immediately
+    ofstream file(" session_EE201_" + date + ".txt", ios::app);
+    file << course << "," << date << "," << time << "," << duration << endl;
     file.close();
 
-    cout << "\nSession Saved Successfully!\n";
+    cout << "\nSession saved to session_EE201_" + date + " .txt:\n";
+    cout << course << "," << date << "," << time << "," << duration << endl;
 }
 
-// ================= VIEW ALL SESSIONS =================
-void viewSessionReport() {
-    vector<string> sessionFiles;
-
-    // Scan current directory
-    for (const auto &entry : fs::directory_iterator(".")) {
-        string filename = entry.path().filename().string();
-
-        if (filename.find("session_") == 0 &&
-            filename.find(".txt") != string::npos) {
-            sessionFiles.push_back(filename);
-        }
-    }
-
-    if (sessionFiles.empty()) {
-        cout << "\nNo session files found.\n";
+                    //Attendance marking function//
+void markAttendance() {
+    if (students.empty() || sessions.empty()) {
+        cout << "Students or sessions missing.\n";
         return;
     }
 
     cout << "\nAvailable Sessions:\n";
-    for (int i = 0; i < sessionFiles.size(); i++) {
-        cout << i + 1 << ". "
-             << sessionFiles[i] << endl;
+    for (int i = 0; i < sessions.size(); i++) {
+        cout << i + 1 << ". ";
+        sessions[i].displaySession();
+    }
+
+    int sessionChoice;
+    cout << "Select session number: ";
+    cin >> sessionChoice;
+
+    if (sessionChoice < 1 || sessionChoice > sessions.size()) {
+        cout << "Invalid session choice.\n";
+        return;
+    }
+
+    AttendanceSession selectedSession = sessions[sessionChoice - 1];
+
+    for (auto &s : students) {
+        char response;
+        cout << "Status for " << s.name << " (P=Present, A=Absent, L=Late): ";
+        cin >> response;
+
+        string status;
+        if (response == 'P' || response == 'p') status = "Present";
+        else if (response == 'L' || response == 'l') status = "Late";
+        else status = "Absent";
+
+        attendanceRecords.push_back(
+            AttendanceRecord(s.indexNumber, selectedSession.courseCode, status)
+        );
+    }
+
+    cout << "Attendance marked successfully!\n";
+}
+
+void updateAttendance() {
+    if (attendanceRecords.empty()) {
+        cout << "No attendance records to update.\n";
+        return;
+    }
+
+    cout << "\nAttendance Records:\n";
+    for (int i = 0; i < attendanceRecords.size(); i++) {
+        cout << i + 1 << ". Index: " << attendanceRecords[i].studentIndex
+             << ", Course: " << attendanceRecords[i].courseCode
+             << ", Status: " << attendanceRecords[i].status << endl;
     }
 
     int choice;
-    cout << "\nSelect session number to view: ";
+    cout << "Select record number to update: ";
     cin >> choice;
 
-    if (choice < 1 || choice > sessionFiles.size()) {
-        cout << "Invalid selection.\n";
+    if (choice < 1 || choice > attendanceRecords.size()) {
+        cout << "Invalid choice.\n";
         return;
     }
 
-    ifstream file(sessionFiles[choice - 1]);
-    if (!file) {
-        cout << "Error opening file.\n";
-        return;
-    }
+    char newStatus;
+    cout << "Mark as (P=Present, A=Absent, L=Late): ";
+    cin >> newStatus;
 
+    if (newStatus == 'P' || newStatus == 'p') attendanceRecords[choice-1].status = "Present";
+    else if (newStatus == 'L' || newStatus == 'l') attendanceRecords[choice-1].status = "Late";
+    else attendanceRecords[choice-1].status = "Absent";
+
+    cout << "Attendance updated successfully!\n";
+}
+
+/* =========================
+   FUNCTIONS (REPORTS & FILES)
+========================= */
+void viewSessionAttendance() {
+    string course;
+    cout << "Enter course code: ";
+    cin >> course;
+
+    cout << "\nAttendance for " << course << ":\n";
+    for (auto &r : attendanceRecords) {
+        if (r.courseCode == course) {
+            cout << "Index: " << r.studentIndex
+                 << ", Status: " << r.status << endl;
+        }
+    }
+}
+
+void attendanceSummary() {
+    int present=0, absent=0, late=0;
+    for (auto &r : attendanceRecords) {
+        if (r.status=="Present") present++;
+        else if (r.status=="Late") late++;
+        else absent++;
+    }
+    cout << "\nSummary:\n";
+    cout << "Present: " << present << endl;
+    cout << "Late: " << late << endl;
+    cout << "Absent: " << absent << endl;
+}
+
+void loadStudents() {
+    ifstream file("students.txt");
     string line;
-    cout << "\n===== SESSION REPORT =====\n";
     while (getline(file, line)) {
-        cout << line << endl;
+        stringstream ss(line);
+        string name, index;
+        getline(ss, name, ',');
+        getline(ss, index);
+        students.push_back(Student(name, index));
     }
-
     file.close();
 }
 
-// ================= MENU =================
-void menu() {
-    cout << "\n===== DIGITAL ATTENDANCE SYSTEM =====\n";
-    cout << "1. Register Student\n";
-    cout << "2. View Students\n";
-    cout << "3. Search Student\n";
-    cout << "4. Create Attendance Session\n";
-    cout << "5. View All Sessions\n";
-    cout << "6. Exit\n";
-    cout << "Choose option: ";
+void loadSessions() {
+    ifstream file("session_EE201_YYYY_MM_DD.txt");
+    string line;
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string c, d, t;
+        int dur;
+        getline(ss, c, ',');
+        getline(ss, d, ',');
+        getline(ss, t, ',');
+        ss >> dur;
+        sessions.push_back(AttendanceSession(c, d, t, dur));
+    }
+    file.close();
 }
 
-// ================= MAIN =================
+
+void saveAttendanceToFile() {
+    ofstream file("attendance.txt");
+    for (auto &r : attendanceRecords)
+        file << r.studentIndex << "," << r.courseCode << "," << r.status << endl;
+    file.close();
+    cout << "Attendance saved successfully!\n";
+}
+
+
+
+
+/* =========================
+   MAIN
+========================= */
 int main() {
     loadStudents();
+    loadSessions();
 
     int choice;
 
     do {
-        menu();
+        cout << "\n=====OPTIONS=====\n";
+        cout << "1. Register Student\n";
+        cout << "2. View Students\n";
+        cout << "3. Search Student\n";
+        cout << "4. Create Attendance Session\n";
+        cout << "5. Mark Attendance\n";
+        cout << "6. Update Attendance\n";
+        cout << "7. View Session Attendance\n";
+        cout << "8. Attendance Summary\n";
+        cout << "9. Save Attendance to File\n";
+        cout << "10. Exit\n";
+        cout << "Choice: ";
         cin >> choice;
 
         switch (choice) {
@@ -256,12 +322,17 @@ int main() {
             case 2: viewStudents(); break;
             case 3: searchStudent(); break;
             case 4: createSession(); break;
-            case 5: viewSessionReport(); break;
-            case 6: cout << "Exiting program...\n"; break;
-            default: cout << "Invalid option.\n";
+            case 5: markAttendance(); break;
+            case 6: updateAttendance(); break;
+            case 7: viewSessionAttendance(); break;
+            case 8: attendanceSummary(); break;
+            case 9: saveAttendanceToFile(); break;
+            case 10: cout << "Exiting...\n"; break;
+            default: cout << "Invalid choice!\n";
         }
 
-    } while (choice != 6);
+    } while (choice != 10);
+
 
     return 0;
 }
