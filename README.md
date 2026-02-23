@@ -1,10 +1,9 @@
-# DIGITAL-ATTENDANCE-SYSTEM 
-A simple attendance management system implemented in C++
+# Digital Attendance System
 
-## Development Environment 
--VS Code
--C++ Compiler
+## Course
+EEE227 – Introduction to C++ Programming  
+HND Electrical Engineering (Level 200)
 
-## Author
-
-Bekoe Sakyi Ernest- 01240087D 
+## Description
+This project is a console-based Digital Attendance System developed in C++.  
+It replaces paper-based attendance taking with a structured digital system.
